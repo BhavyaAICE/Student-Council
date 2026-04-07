@@ -94,6 +94,28 @@ async function uploadToSupabase(buffer, filename) {
 // PUBLIC ROUTES
 // ===================================
 
+// Health check / debug
+app.get('/api/health', async (req, res) => {
+    const info = {
+        env: {
+            DB_HOST: process.env.DB_HOST ? 'set' : 'MISSING',
+            DB_PASSWORD: process.env.DB_PASSWORD ? 'set' : 'MISSING',
+            DB_NAME: process.env.DB_NAME || 'default:postgres',
+            SUPABASE_URL: process.env.SUPABASE_URL ? 'set' : 'MISSING',
+            SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY ? 'set' : 'MISSING',
+            NODE_ENV: process.env.NODE_ENV || 'not set'
+        },
+        db: 'not tested'
+    };
+    try {
+        const result = await getPool().query('SELECT NOW() as time');
+        info.db = 'connected: ' + result.rows[0].time;
+    } catch (e) {
+        info.db = 'ERROR: ' + e.message;
+    }
+    res.json(info);
+});
+
 // Home page data
 app.get('/api/home', async (req, res) => {
     try {
@@ -117,7 +139,7 @@ app.get('/api/home', async (req, res) => {
         res.json({ settings: settingsRes.rows[0] || {}, faculty: facultyRes.rows, councilHeads: councilRes.rows, clubs });
     } catch (err) {
         console.error('Home API error:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error', details: err.message });
     }
 });
 
