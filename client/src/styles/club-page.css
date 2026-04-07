@@ -1,0 +1,482 @@
+/* ===== CLUB PAGE STYLES ===== */
+
+/* Back navigation */
+.club-back {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    transition: color 0.3s ease, transform 0.3s ease;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.2);
+    backdrop-filter: blur(8px);
+}
+
+.club-back:hover {
+    color: var(--white);
+    transform: translateX(-4px);
+    background: rgba(0,0,0,0.4);
+}
+
+.club-back svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Club Hero */
+.club-hero {
+    position: relative;
+    min-height: 50vh;
+    display: flex;
+    align-items: flex-end;
+    padding: 60px 0 48px;
+    overflow: hidden;
+}
+
+.club-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.club-hero-gradient {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.club-hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+
+.club-hero-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.club-hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 16px;
+}
+
+.club-hero-desc {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.65);
+    max-width: 600px;
+    line-height: 1.7;
+}
+
+.club-hero-meta {
+    display: flex;
+    gap: 32px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.club-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.club-meta-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+}
+
+.club-meta-value {
+    font-size: 0.9rem;
+    color: var(--white);
+    font-weight: 500;
+}
+
+/* Club Sections */
+.club-section {
+    padding: 80px 0;
+}
+
+.club-section:nth-child(even) {
+    background: var(--light-grey);
+}
+
+.club-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 48px;
+}
+
+.club-section-num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--green);
+    opacity: 0.6;
+}
+
+.club-section-title {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.club-section-title em {
+    font-style: italic;
+    color: var(--green);
+}
+
+/* Leadership Cards */
+.leadership-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.leadership-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.04);
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+    position: relative;
+    overflow: hidden;
+}
+
+.leadership-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--green);
+    transform: scaleX(0);
+    transition: transform 0.4s var(--ease-out);
+}
+
+.leadership-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.08);
+}
+
+.leadership-card:hover::after {
+    transform: scaleX(1);
+}
+
+.leadership-card.captain {
+    border: 1px solid rgba(61,177,102,0.15);
+}
+
+.leadership-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.leadership-card.captain .leadership-avatar {
+    background: var(--green);
+}
+
+.leadership-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+}
+
+.leadership-card .role-badge {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 8px;
+}
+
+.leadership-card .member-id {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Members Table */
+.members-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+}
+
+.members-table thead {
+    background: var(--navy);
+}
+
+.members-table th {
+    padding: 14px 24px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    text-align: left;
+    font-weight: 400;
+}
+
+.members-table td {
+    padding: 14px 24px;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--mid-grey);
+}
+
+.members-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.members-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.members-table tbody tr:hover {
+    background: var(--light-grey);
+}
+
+.members-table .member-name {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.members-table .mini-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.5rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.members-table .member-roll {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Faculty Advisors */
+.faculty-advisors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.advisor-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--white);
+    padding: 20px 28px;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    flex: 1;
+    min-width: 250px;
+}
+
+.advisor-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.advisor-info h4 {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.advisor-info p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Gallery Placeholder */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.gallery-item {
+    aspect-ratio: 4/3;
+    background: var(--mid-grey);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: transform 0.4s var(--ease-out);
+}
+
+.gallery-item:hover {
+    transform: scale(1.03);
+}
+
+.gallery-item.gallery-large {
+    grid-column: span 2;
+    grid-row: span 2;
+    aspect-ratio: auto;
+}
+
+.gallery-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+.gallery-placeholder svg {
+    opacity: 0.3;
+}
+
+.gallery-placeholder span {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+
+/* Club Page Footer CTA */
+.club-footer-cta {
+    text-align: center;
+    padding: 80px 0;
+    background: var(--navy);
+}
+
+.club-footer-cta h2 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 12px;
+}
+
+.club-footer-cta p {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 32px;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: var(--green);
+    color: var(--white);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.btn-back:hover {
+    background: var(--green-dark);
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .club-hero {
+        min-height: 40vh;
+        padding: 80px 0 32px;
+    }
+
+    .club-hero-meta {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .leadership-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .club-back {
+        top: 16px;
+        left: 16px;
+        font-size: 0.65rem;
+    }
+
+    .members-table th,
+    .members-table td {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+    }
+}

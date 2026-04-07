@@ -1,0 +1,114 @@
+/* ===== ADMIN PANEL CSS ===== */
+:root { --navy: #002147; --green: #3db166; --green-dark: #2d9940; --bg: #f5f6fa; --card: #ffffff; --text: #1a1a1a; --muted: #777; --border: #e8e8ec; --danger: #e53935; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Login */
+.login-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--navy); }
+.login-card { background: var(--card); padding: 48px 40px; border-radius: 16px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.login-logo { font-family: 'Space Mono', monospace; font-size: 2.5rem; font-weight: 700; color: var(--green); margin-bottom: 8px; }
+.login-card h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 4px; }
+.login-card > p { font-size: 0.85rem; color: var(--muted); margin-bottom: 32px; }
+
+/* Nav */
+.admin-nav { background: var(--navy); padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+.admin-nav-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+.admin-brand { font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700; color: var(--green); text-decoration: none; }
+.admin-brand span { color: rgba(255,255,255,0.5); font-weight: 400; font-size: 0.9rem; margin-left: 6px; }
+.admin-nav-links { display: flex; gap: 4px; align-items: center; }
+.admin-nav-links a { font-size: 0.8rem; color: rgba(255,255,255,0.6); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: all 0.2s; }
+.admin-nav-links a:hover, .admin-nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
+.btn-logout { color: var(--danger) !important; }
+
+/* Main */
+.admin-main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+.admin-main h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
+.admin-subtitle { font-size: 0.9rem; color: var(--muted); margin-bottom: 32px; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+.stat-card { background: var(--card); padding: 28px 24px; border-radius: 12px; text-decoration: none; color: var(--text); box-shadow: 0 2px 12px rgba(0,0,0,0.04); transition: transform 0.3s, box-shadow 0.3s; display: flex; flex-direction: column; }
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.stat-val { font-size: 2.5rem; font-weight: 700; color: var(--navy); line-height: 1; }
+.stat-lbl { font-size: 0.8rem; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Quick Actions */
+.quick-actions h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
+.action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.action-card { display: flex; align-items: center; gap: 12px; background: var(--card); padding: 20px; border-radius: 10px; text-decoration: none; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: all 0.3s; }
+.action-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.action-card svg { color: var(--green); flex-shrink: 0; }
+.action-card span { font-size: 0.9rem; font-weight: 500; }
+
+/* Cards */
+.card { background: var(--card); border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.card h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid .full { grid-column: span 2; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.form-group input, .form-group textarea, .form-group select { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: inherit; transition: border-color 0.2s; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--green); }
+.form-group input[type="file"] { padding: 8px; }
+.form-group input[type="color"] { height: 42px; padding: 4px; cursor: pointer; }
+.checkbox-group label { flex-direction: row; gap: 8px; align-items: center; display: flex; cursor: pointer; font-size: 0.85rem; text-transform: none; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-decoration: none; }
+.btn-primary { background: var(--green); color: #fff; }
+.btn-primary:hover { background: var(--green-dark); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: #c62828; }
+.btn-sm { padding: 6px 12px; font-size: 0.75rem; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th { padding: 10px 14px; text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 2px solid var(--border); }
+.admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; vertical-align: middle; }
+.admin-table tbody tr:hover { background: #f9f9fb; }
+.table-thumb { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.table-initials { display: inline-flex; width: 40px; height: 40px; border-radius: 50%; background: var(--navy); color: #fff; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; font-family: 'Space Mono', monospace; }
+.edit-row td { background: #f5f6fa; }
+.actions { white-space: nowrap; display: flex; gap: 6px; }
+
+/* Badges */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.badge-captain { background: rgba(61,177,102,0.15); color: var(--green-dark); }
+.badge-vice_captain { background: rgba(0,33,71,0.1); color: var(--navy); }
+.badge-member { background: var(--border); color: var(--muted); }
+
+/* Alerts */
+.alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; }
+.alert-success { background: rgba(61,177,102,0.1); color: var(--green-dark); border: 1px solid rgba(61,177,102,0.2); }
+.alert-error { background: rgba(229,57,53,0.1); color: var(--danger); border: 1px solid rgba(229,57,53,0.2); }
+
+/* Clubs admin */
+.clubs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.club-admin-card { background: var(--bg); padding: 20px; border-radius: 10px; }
+.club-admin-card h3 { font-size: 1rem; margin-bottom: 2px; }
+.club-slug { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--green); margin-bottom: 6px; }
+.club-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+.club-admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.club-admin-card.editing { outline: 2px solid var(--green); outline-offset: -2px; }
+.edit-panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* Advisor row */
+.advisor-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+
+/* Back link */
+.back-link { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--green); text-decoration: none; margin-bottom: 16px; }
+.back-link:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-nav-links { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: span 1; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .clubs-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "aac-council",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:client\"",
+    "dev:api": "cd api && node -e \"require('dotenv').config({path:require('path').join(__dirname,'..', '.env')});require('./index').listen(process.env.PORT||3456,()=>console.log('API on '+( process.env.PORT||3456)))\"",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "seed": "cd server && node db/seed.js",
+    "vercel-build": "cd client && npm install && npm run build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.1.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
