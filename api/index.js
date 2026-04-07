@@ -1,34 +1,50 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const multer = require('multer');
-const { createClient } = require('@supabase/supabase-js');
 const { Pool } = require('pg');
 
 // ===== CONFIG =====
 const JWT_SECRET = process.env.SESSION_SECRET || 'aac_council_secret_key_2026_xkT9mP';
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
-const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'postgres',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD,
-    ssl: { rejectUnauthorized: false },
-    connectionTimeoutMillis: 10000
-});
+// Lazy-init pool (avoids crash if env vars not set during build)
+let pool;
+function getPool() {
+    if (!pool) {
+        pool = new Pool({
+            host: process.env.DB_HOST,
+            port: parseInt(process.env.DB_PORT || '5432'),
+            database: process.env.DB_NAME || 'postgres',
+            user: process.env.DB_USER || 'postgres',
+            password: process.env.DB_PASSWORD,
+            ssl: { rejectUnauthorized: false },
+            connectionTimeoutMillis: 10000
+        });
+    }
+    return pool;
+}
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+// Lazy-init Supabase client
+let supabase;
+function getSupabase() {
+    if (!supabase) {
+        const { createClient } = require('@supabase/supabase-js');
+        supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    }
+    return supabase;
+}
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+// bcrypt - try native, fallback to JS
+let bcryptLib;
+try { bcryptLib = require('bcrypt'); } catch { bcryptLib = require('bcryptjs'); }
 
 // ===== EXPRESS APP =====
 const app = express();
 
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? true : 'http://localhost:5173',
+    origin: true,
     credentials: true
 }));
 app.use(express.json());
@@ -65,12 +81,12 @@ app.use((req, res, next) => { parseCookies(req); next(); });
 async function uploadToSupabase(buffer, filename) {
     const ext = filename.split('.').pop();
     const name = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-    const { error } = await supabase.storage.from('uploads').upload(name, buffer, {
+    const { error } = await getSupabase().storage.from('uploads').upload(name, buffer, {
         contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
         upsert: true
     });
     if (error) throw error;
-    const { data } = supabase.storage.from('uploads').getPublicUrl(name);
+    const { data } = getSupabase().storage.from('uploads').getPublicUrl(name);
     return data.publicUrl;
 }
 
@@ -82,16 +98,16 @@ async function uploadToSupabase(buffer, filename) {
 app.get('/api/home', async (req, res) => {
     try {
         const [settingsRes, facultyRes, councilRes, clubsRes] = await Promise.all([
-            pool.query('SELECT * FROM settings LIMIT 1'),
-            pool.query('SELECT * FROM faculty ORDER BY display_order'),
-            pool.query('SELECT * FROM council_heads ORDER BY display_order'),
-            pool.query('SELECT * FROM clubs ORDER BY display_order')
+            getPool().query('SELECT * FROM settings LIMIT 1'),
+            getPool().query('SELECT * FROM faculty ORDER BY display_order'),
+            getPool().query('SELECT * FROM council_heads ORDER BY display_order'),
+            getPool().query('SELECT * FROM clubs ORDER BY display_order')
         ]);
         const clubs = clubsRes.rows;
         for (const club of clubs) {
             const [membersRes, advisorsRes] = await Promise.all([
-                pool.query('SELECT * FROM club_members WHERE club_id = $1 ORDER BY display_order', [club.id]),
-                pool.query('SELECT * FROM club_advisors WHERE club_id = $1', [club.id])
+                getPool().query('SELECT * FROM club_members WHERE club_id = $1 ORDER BY display_order', [club.id]),
+                getPool().query('SELECT * FROM club_advisors WHERE club_id = $1', [club.id])
             ]);
             club.captain = membersRes.rows.find(m => m.position === 'captain') || null;
             club.vice_captain = membersRes.rows.find(m => m.position === 'vice_captain') || null;
@@ -108,13 +124,13 @@ app.get('/api/home', async (req, res) => {
 // Club detail
 app.get('/api/clubs/:slug', async (req, res) => {
     try {
-        const clubRes = await pool.query('SELECT * FROM clubs WHERE slug = $1', [req.params.slug]);
+        const clubRes = await getPool().query('SELECT * FROM clubs WHERE slug = $1', [req.params.slug]);
         if (clubRes.rows.length === 0) return res.status(404).json({ error: 'Club not found' });
         const club = clubRes.rows[0];
         const [membersRes, advisorsRes, settingsRes] = await Promise.all([
-            pool.query('SELECT * FROM club_members WHERE club_id = $1 ORDER BY display_order', [club.id]),
-            pool.query('SELECT * FROM club_advisors WHERE club_id = $1', [club.id]),
-            pool.query('SELECT * FROM settings LIMIT 1')
+            getPool().query('SELECT * FROM club_members WHERE club_id = $1 ORDER BY display_order', [club.id]),
+            getPool().query('SELECT * FROM club_advisors WHERE club_id = $1', [club.id]),
+            getPool().query('SELECT * FROM settings LIMIT 1')
         ]);
         club.captain = membersRes.rows.find(m => m.position === 'captain') || null;
         club.vice_captain = membersRes.rows.find(m => m.position === 'vice_captain') || null;
@@ -137,9 +153,9 @@ app.get('/api/admin/me', requireAdmin, (req, res) => {
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const result = await pool.query('SELECT * FROM admins WHERE username = $1', [username]);
+        const result = await getPool().query('SELECT * FROM admins WHERE username = $1', [username]);
         if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
-        const valid = await bcrypt.compare(password, result.rows[0].password_hash);
+        const valid = await bcryptLib.compare(password, result.rows[0].password_hash);
         if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
         const token = signToken(result.rows[0]);
         res.setHeader('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
@@ -160,10 +176,10 @@ app.post('/api/admin/logout', (req, res) => {
 
 app.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
     const [faculty, council, clubs, members] = await Promise.all([
-        pool.query('SELECT COUNT(*) FROM faculty'),
-        pool.query('SELECT COUNT(*) FROM council_heads'),
-        pool.query('SELECT COUNT(*) FROM clubs'),
-        pool.query('SELECT COUNT(*) FROM club_members')
+        getPool().query('SELECT COUNT(*) FROM faculty'),
+        getPool().query('SELECT COUNT(*) FROM council_heads'),
+        getPool().query('SELECT COUNT(*) FROM clubs'),
+        getPool().query('SELECT COUNT(*) FROM club_members')
     ]);
     res.json({ counts: { faculty: +faculty.rows[0].count, council: +council.rows[0].count, clubs: +clubs.rows[0].count, members: +members.rows[0].count } });
 });
@@ -173,13 +189,13 @@ app.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
 // ===================================
 
 app.get('/api/admin/settings', requireAdmin, async (req, res) => {
-    const result = await pool.query('SELECT * FROM settings LIMIT 1');
+    const result = await getPool().query('SELECT * FROM settings LIMIT 1');
     res.json({ settings: result.rows[0] || {} });
 });
 
 app.post('/api/admin/settings', requireAdmin, async (req, res) => {
     const { site_title, site_year, hero_tagline, about_text, about_text_2, college_name, college_address, college_email } = req.body;
-    await pool.query(
+    await getPool().query(
         'UPDATE settings SET site_title=$1, site_year=$2, hero_tagline=$3, about_text=$4, about_text_2=$5, college_name=$6, college_address=$7, college_email=$8, updated_at=NOW()',
         [site_title, site_year, hero_tagline, about_text, about_text_2, college_name, college_address, college_email]
     );
@@ -191,7 +207,7 @@ app.post('/api/admin/settings', requireAdmin, async (req, res) => {
 // ===================================
 
 app.get('/api/admin/faculty', requireAdmin, async (req, res) => {
-    const result = await pool.query('SELECT * FROM faculty ORDER BY display_order');
+    const result = await getPool().query('SELECT * FROM faculty ORDER BY display_order');
     res.json({ faculty: result.rows });
 });
 
@@ -199,7 +215,7 @@ app.post('/api/admin/faculty', requireAdmin, upload.single('photo'), async (req,
     const { name, designation, department, email, phone, is_head, display_order } = req.body;
     let photo_url = null;
     if (req.file) photo_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'INSERT INTO faculty (name, designation, department, email, phone, photo_url, is_head, display_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
         [name, designation, department, email, phone, photo_url, is_head === 'true' || is_head === 'on', display_order || 0]
     );
@@ -210,7 +226,7 @@ app.put('/api/admin/faculty/:id', requireAdmin, upload.single('photo'), async (r
     const { name, designation, department, email, phone, is_head, display_order, existing_photo } = req.body;
     let photo_url = existing_photo || null;
     if (req.file) photo_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'UPDATE faculty SET name=$1, designation=$2, department=$3, email=$4, phone=$5, photo_url=$6, is_head=$7, display_order=$8 WHERE id=$9',
         [name, designation, department, email, phone, photo_url, is_head === 'true' || is_head === 'on', display_order || 0, req.params.id]
     );
@@ -218,7 +234,7 @@ app.put('/api/admin/faculty/:id', requireAdmin, upload.single('photo'), async (r
 });
 
 app.delete('/api/admin/faculty/:id', requireAdmin, async (req, res) => {
-    await pool.query('DELETE FROM faculty WHERE id = $1', [req.params.id]);
+    await getPool().query('DELETE FROM faculty WHERE id = $1', [req.params.id]);
     res.json({ success: true });
 });
 
@@ -227,7 +243,7 @@ app.delete('/api/admin/faculty/:id', requireAdmin, async (req, res) => {
 // ===================================
 
 app.get('/api/admin/council', requireAdmin, async (req, res) => {
-    const result = await pool.query('SELECT * FROM council_heads ORDER BY display_order');
+    const result = await getPool().query('SELECT * FROM council_heads ORDER BY display_order');
     res.json({ heads: result.rows });
 });
 
@@ -235,7 +251,7 @@ app.post('/api/admin/council', requireAdmin, upload.single('photo'), async (req,
     const { name, role, enrollment_id, email, phone, department, year, display_order } = req.body;
     let photo_url = null;
     if (req.file) photo_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'INSERT INTO council_heads (name, role, enrollment_id, email, phone, department, year, photo_url, display_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
         [name, role, enrollment_id, email, phone, department, year, photo_url, display_order || 0]
     );
@@ -246,7 +262,7 @@ app.put('/api/admin/council/:id', requireAdmin, upload.single('photo'), async (r
     const { name, role, enrollment_id, email, phone, department, year, display_order, existing_photo } = req.body;
     let photo_url = existing_photo || null;
     if (req.file) photo_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'UPDATE council_heads SET name=$1, role=$2, enrollment_id=$3, email=$4, phone=$5, department=$6, year=$7, photo_url=$8, display_order=$9 WHERE id=$10',
         [name, role, enrollment_id, email, phone, department, year, photo_url, display_order || 0, req.params.id]
     );
@@ -254,7 +270,7 @@ app.put('/api/admin/council/:id', requireAdmin, upload.single('photo'), async (r
 });
 
 app.delete('/api/admin/council/:id', requireAdmin, async (req, res) => {
-    await pool.query('DELETE FROM council_heads WHERE id = $1', [req.params.id]);
+    await getPool().query('DELETE FROM council_heads WHERE id = $1', [req.params.id]);
     res.json({ success: true });
 });
 
@@ -263,7 +279,7 @@ app.delete('/api/admin/council/:id', requireAdmin, async (req, res) => {
 // ===================================
 
 app.get('/api/admin/clubs', requireAdmin, async (req, res) => {
-    const result = await pool.query('SELECT * FROM clubs ORDER BY display_order');
+    const result = await getPool().query('SELECT * FROM clubs ORDER BY display_order');
     res.json({ clubs: result.rows });
 });
 
@@ -271,7 +287,7 @@ app.post('/api/admin/clubs', requireAdmin, upload.single('banner'), async (req, 
     const { name, slug, description, hero_gradient, bg_tint, icon_svg, display_order, is_large, is_wide } = req.body;
     let banner_image_url = null;
     if (req.file) banner_image_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'INSERT INTO clubs (name, slug, description, hero_gradient, bg_tint, icon_svg, display_order, is_large, is_wide, banner_image_url) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
         [name, slug, description, hero_gradient, bg_tint, icon_svg, display_order || 0, is_large === 'true' || is_large === 'on', is_wide === 'true' || is_wide === 'on', banner_image_url]
     );
@@ -282,7 +298,7 @@ app.put('/api/admin/clubs/:id', requireAdmin, upload.single('banner'), async (re
     const { name, slug, description, hero_gradient, bg_tint, icon_svg, display_order, is_large, is_wide, existing_banner } = req.body;
     let banner_image_url = existing_banner || null;
     if (req.file) banner_image_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'UPDATE clubs SET name=$1, slug=$2, description=$3, hero_gradient=$4, bg_tint=$5, icon_svg=$6, display_order=$7, is_large=$8, is_wide=$9, banner_image_url=$10 WHERE id=$11',
         [name, slug, description, hero_gradient, bg_tint, icon_svg, display_order || 0, is_large === 'true' || is_large === 'on', is_wide === 'true' || is_wide === 'on', banner_image_url, req.params.id]
     );
@@ -290,7 +306,7 @@ app.put('/api/admin/clubs/:id', requireAdmin, upload.single('banner'), async (re
 });
 
 app.delete('/api/admin/clubs/:id', requireAdmin, async (req, res) => {
-    await pool.query('DELETE FROM clubs WHERE id = $1', [req.params.id]);
+    await getPool().query('DELETE FROM clubs WHERE id = $1', [req.params.id]);
     res.json({ success: true });
 });
 
@@ -299,10 +315,10 @@ app.delete('/api/admin/clubs/:id', requireAdmin, async (req, res) => {
 // ===================================
 
 app.get('/api/admin/clubs/:id/members', requireAdmin, async (req, res) => {
-    const club = await pool.query('SELECT * FROM clubs WHERE id = $1', [req.params.id]);
+    const club = await getPool().query('SELECT * FROM clubs WHERE id = $1', [req.params.id]);
     if (club.rows.length === 0) return res.status(404).json({ error: 'Club not found' });
-    const members = await pool.query('SELECT * FROM club_members WHERE club_id = $1 ORDER BY display_order', [req.params.id]);
-    const advisors = await pool.query('SELECT * FROM club_advisors WHERE club_id = $1', [req.params.id]);
+    const members = await getPool().query('SELECT * FROM club_members WHERE club_id = $1 ORDER BY display_order', [req.params.id]);
+    const advisors = await getPool().query('SELECT * FROM club_advisors WHERE club_id = $1', [req.params.id]);
     res.json({ club: club.rows[0], members: members.rows, advisors: advisors.rows });
 });
 
@@ -310,7 +326,7 @@ app.post('/api/admin/clubs/:id/members', requireAdmin, upload.single('photo'), a
     const { name, roll_no, email, phone, position, display_order } = req.body;
     let photo_url = null;
     if (req.file) photo_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'INSERT INTO club_members (club_id, name, roll_no, email, phone, photo_url, position, display_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
         [req.params.id, name, roll_no, email, phone, photo_url, position, display_order || 0]
     );
@@ -321,7 +337,7 @@ app.put('/api/admin/members/:id', requireAdmin, upload.single('photo'), async (r
     const { name, roll_no, email, phone, position, display_order, existing_photo } = req.body;
     let photo_url = existing_photo || null;
     if (req.file) photo_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'UPDATE club_members SET name=$1, roll_no=$2, email=$3, phone=$4, photo_url=$5, position=$6, display_order=$7 WHERE id=$8',
         [name, roll_no, email, phone, photo_url, position, display_order || 0, req.params.id]
     );
@@ -329,7 +345,7 @@ app.put('/api/admin/members/:id', requireAdmin, upload.single('photo'), async (r
 });
 
 app.delete('/api/admin/members/:id', requireAdmin, async (req, res) => {
-    await pool.query('DELETE FROM club_members WHERE id = $1', [req.params.id]);
+    await getPool().query('DELETE FROM club_members WHERE id = $1', [req.params.id]);
     res.json({ success: true });
 });
 
@@ -341,7 +357,7 @@ app.post('/api/admin/clubs/:id/advisors', requireAdmin, upload.single('photo'), 
     const { name, designation, email, phone } = req.body;
     let photo_url = null;
     if (req.file) photo_url = await uploadToSupabase(req.file.buffer, req.file.originalname);
-    await pool.query(
+    await getPool().query(
         'INSERT INTO club_advisors (club_id, name, designation, email, phone, photo_url) VALUES ($1,$2,$3,$4,$5,$6)',
         [req.params.id, name, designation, email, phone, photo_url]
     );
@@ -349,7 +365,7 @@ app.post('/api/admin/clubs/:id/advisors', requireAdmin, upload.single('photo'), 
 });
 
 app.delete('/api/admin/advisors/:id', requireAdmin, async (req, res) => {
-    await pool.query('DELETE FROM club_advisors WHERE id = $1', [req.params.id]);
+    await getPool().query('DELETE FROM club_advisors WHERE id = $1', [req.params.id]);
     res.json({ success: true });
 });
 
@@ -358,7 +374,7 @@ app.delete('/api/admin/remove-photo/:table/:id', requireAdmin, async (req, res) 
     const allowed = { faculty: 'faculty', council: 'council_heads', members: 'club_members' };
     const table = allowed[req.params.table];
     if (!table) return res.status(400).json({ error: 'Invalid table' });
-    await pool.query(`UPDATE ${table} SET photo_url = NULL WHERE id = $1`, [req.params.id]);
+    await getPool().query(`UPDATE ${table} SET photo_url = NULL WHERE id = $1`, [req.params.id]);
     res.json({ success: true });
 });
 
