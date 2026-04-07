@@ -12,11 +12,11 @@ let pool;
 function getPool() {
     if (!pool) {
         pool = new Pool({
-            host: process.env.DB_HOST,
-            port: parseInt(process.env.DB_PORT || '5432'),
-            database: process.env.DB_NAME || 'postgres',
-            user: process.env.DB_USER || 'postgres',
-            password: process.env.DB_PASSWORD,
+            host: process.env.DB_HOST?.trim(),
+            port: parseInt(process.env.DB_PORT?.trim() || '5432'),
+            database: process.env.DB_NAME?.trim() || 'postgres',
+            user: process.env.DB_USER?.trim() || 'postgres',
+            password: process.env.DB_PASSWORD?.trim(),
             ssl: { rejectUnauthorized: false },
             connectionTimeoutMillis: 10000
         });
@@ -98,9 +98,10 @@ async function uploadToSupabase(buffer, filename) {
 app.get('/api/health', async (req, res) => {
     const info = {
         env: {
-            DB_HOST: process.env.DB_HOST ? 'set' : 'MISSING',
+            DB_HOST_RAW: process.env.DB_HOST ? `"${process.env.DB_HOST}"` : 'MISSING',
             DB_PASSWORD: process.env.DB_PASSWORD ? 'set' : 'MISSING',
             DB_NAME: process.env.DB_NAME || 'default:postgres',
+            DB_PORT: process.env.DB_PORT || '5432',
             SUPABASE_URL: process.env.SUPABASE_URL ? 'set' : 'MISSING',
             SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY ? 'set' : 'MISSING',
             NODE_ENV: process.env.NODE_ENV || 'not set'
